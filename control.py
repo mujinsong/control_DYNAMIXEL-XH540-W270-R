@@ -33,6 +33,15 @@ groupSyncWrite = GroupSyncWrite(portHandler, packetHandler, ADDR_PRO_GOAL_POSITI
 groupSyncRead = GroupSyncRead(portHandler, packetHandler, ADDR_PRO_PRESENT_POSITION, LEN_PRO_PRESENT_POSITION)
 pi = math.pi
 
+def read_present_pos(n):#读取当前姿态下每个电机的实际位置
+    present_pos=[]
+    for id in range(n):
+        present_pos.append(packetHandler.read4ByteTxRx(portHandler, id, ADDR_PRO_PRESENT_POSITION)[0])
+    return present_pos
+
+def cal_pi_to_2048(a):#把弧度制变成2048制
+    return a / (2 * pi) * 4096 + 2048
+
 
 # 准备啦,开力矩
 def ready(n):
@@ -126,8 +135,8 @@ def gg(n):
 def move_byspeed(lenoflink, snake, q1, speed, t):
     # q1 = q1 / 180 * pi
     end2 = q1
-    t=np.array(t)
-    #print(t,type(t),len(t))
+    t = np.array(t)
+    # print(t,type(t),len(t))
     dt = (t[len(t) - 1] - t[0]) / len(t)
     save = np.zeros([len(t), lenoflink])
     for i in (range(len(t))):
@@ -159,19 +168,17 @@ def shiliangji_Jacobian_MDH(T):
         T_i_n = np.dot((np.linalg.inv(T[i])), T[n - 1])
         # print("ttt",T_i_n,type(T_i_n))
         p_i_n = (T_i_n[:3, 3])
-
         # print("ppp", p_i_n, (p_i_n).shape)
         z_i = np.asarray(np.dot(R, k))
         # print("zzz",z_i,z_i.shape)
-        temp = np.dot(R, p_i_n).reshape([1,3])
+        temp = np.dot(R, p_i_n).reshape([1, 3])
         # print("**", temp,temp.shape)
         # print(z_i.shape,np.dot(R,p_i_n).shape)
-        Jv[:,i] = np.cross(z_i.T, temp)
-        Jw[:,i] = z_i.T
+        Jv[:, i] = np.cross(z_i.T, temp)
+        Jw[:, i] = z_i.T
     # print(Jv.shape,Jw.shape)
     J = np.r_[Jv, Jw]
     return J
-
 
 # if __name__=='__main__':
 #     lenoflink = 8
